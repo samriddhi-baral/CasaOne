@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect fill="#243044" width="400" height="300"/>
+  <rect fill="#1a2332" x="40" y="80" width="320" height="180" rx="8"/>
+  <text fill="#94a3b8" font-family="system-ui,sans-serif" font-size="18" x="200" y="175" text-anchor="middle">Room</text>
+  <text fill="#64748b" font-family="system-ui,sans-serif" font-size="14" x="200" y="198" text-anchor="middle">Image</text>
+</svg>
