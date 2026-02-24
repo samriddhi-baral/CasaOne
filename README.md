@@ -132,7 +132,6 @@ Admin panel (protected)
 - [admin/hostels.php](admin/hostels.php): Hostels management
 - [admin/payments.php](admin/payments.php): Payments management
 - [admin/rooms.php](admin/rooms.php): Admin rooms CRUD
-- [admin/students.php](admin/students.php): Student records
 - [admin/users.php](admin/users.php): Admin users management
 - [admin/includes/header.php](admin/includes/header.php) and [admin/includes/footer.php](admin/includes/footer.php)
 
