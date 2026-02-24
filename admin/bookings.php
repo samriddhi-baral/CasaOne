@@ -4,6 +4,28 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDB();
+
+// Admin manages booking lifecycle after payment: confirm, check-in, check-out
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['booking_id'])) {
+    $bid = (int)$_POST['booking_id'];
+    $action = $_POST['action'];
+
+    $stmt = $pdo->prepare("SELECT b_id, status FROM booking WHERE b_id = ?");
+    $stmt->execute([$bid]);
+    if ($row = $stmt->fetch()) {
+        if ($action === 'confirm' && $row['status'] === 'paid') {
+            $pdo->prepare("UPDATE booking SET status = 'confirmed' WHERE b_id = ?")->execute([$bid]);
+        } elseif ($action === 'check_in' && $row['status'] === 'confirmed') {
+            $pdo->prepare("UPDATE booking SET status = 'checked_in' WHERE b_id = ?")->execute([$bid]);
+        } elseif ($action === 'check_out' && $row['status'] === 'checked_in') {
+            $pdo->prepare("UPDATE booking SET check_out = CURDATE(), status = 'checked_out' WHERE b_id = ?")->execute([$bid]);
+        }
+    }
+
+    header('Location: bookings.php');
+    exit;
+}
+
 $bookings = [];
 try {
     $bookings = $pdo->query("
@@ -39,6 +61,7 @@ try {
                         <th>Check-out</th>
                         <th>Status</th>
                         <th>Book Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,6 +76,27 @@ try {
                         <td><?= !empty($b['check_out']) ? htmlspecialchars($b['check_out']) : '—' ?></td>
                         <td><span class="badge badge-<?= $b['status'] ?? 'pending' ?>"><?= htmlspecialchars($b['status'] ?? 'pending') ?></span></td>
                         <td><?= htmlspecialchars($b['book_date'] ?? '—') ?></td>
+                        <td>
+                            <?php if (($b['status'] ?? '') === 'paid'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
+                                <input type="hidden" name="action" value="confirm">
+                                <button type="submit" class="btn btn-primary" style="padding:0.35rem 0.7rem; font-size:0.85rem;">Confirm</button>
+                            </form>
+                            <?php elseif (($b['status'] ?? '') === 'confirmed'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
+                                <input type="hidden" name="action" value="check_in">
+                                <button type="submit" class="btn btn-primary" style="padding:0.35rem 0.7rem; font-size:0.85rem;">Check In</button>
+                            </form>
+                            <?php elseif (($b['status'] ?? '') === 'checked_in'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
+                                <input type="hidden" name="action" value="check_out">
+                                <button type="submit" class="btn btn-secondary" style="padding:0.35rem 0.7rem; font-size:0.85rem;">Check Out</button>
+                            </form>
+                            <?php else: ?>—<?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

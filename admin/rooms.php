@@ -13,9 +13,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $room_no = trim($_POST['room_no'] ?? '');
         $price = (float)($_POST['price'] ?? 0);
         $availability = trim($_POST['availability'] ?? 'available') ?: 'available';
+
+        // Handle optional room photo upload
+        $photoPath = null;
+        if (!empty($_FILES['photo']['name']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/../uploads/rooms/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+            $fileName = 'room_' . time() . '_' . mt_rand(1000, 9999) . '.' . $ext;
+            $fullPath = $uploadDir . $fileName;
+            if (move_uploaded_file($_FILES['photo']['tmp_name'], $fullPath)) {
+                // store relative path from project root
+                $photoPath = 'uploads/rooms/' . $fileName;
+            }
+        }
+
         if ($h_id && $room_no !== '') {
-            $pdo->prepare("INSERT INTO room (h_id, room_no, price, availability) VALUES (?, ?, ?, ?)")->execute([$h_id, $room_no, $price, $availability]);
+            // Insert room with optional photo path
+            $stmt = $pdo->prepare("INSERT INTO room (h_id, room_no, price, availability, photo) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$h_id, $room_no, $price, $availability, $photoPath]);
             $r_id = $pdo->lastInsertId();
+
             $type = trim($_POST['type'] ?? '');
             $capacity = (int)($_POST['capacity'] ?? 0);
             if ($type !== '' || $capacity > 0) {
@@ -29,19 +49,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $pdo->prepare("UPDATE room SET availability = ? WHERE room_id = ?")->execute([$_POST['availability'], (int)$_POST['room_id']]);
         $success = 'Availability updated.';
     } elseif ($_POST['action'] === 'delete' && isset($_POST['room_id'])) {
+        $roomId = (int)$_POST['room_id'];
         try {
-            $pdo->prepare("DELETE FROM roomtype WHERE room_id = ?")->execute([(int)$_POST['room_id']]);
-            $pdo->prepare("DELETE FROM room WHERE room_id = ?")->execute([(int)$_POST['room_id']]);
-            $success = 'Room deleted.';
+            // Only allow delete when there are no active bookings for this room
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) AS cnt
+                FROM booking
+                WHERE room_id = ?
+                  AND status IN ('pending','paid','confirmed','checked_in')
+            ");
+            $stmt->execute([$roomId]);
+            $active = (int)$stmt->fetchColumn();
+
+            if ($active > 0) {
+                $error = 'Cannot delete: room has active bookings.';
+            } else {
+                // Remove checked-out / historical bookings for this room, then delete room
+                $pdo->prepare("DELETE FROM booking WHERE room_id = ?")->execute([$roomId]);
+                $pdo->prepare("DELETE FROM roomtype WHERE room_id = ?")->execute([$roomId]);
+                $pdo->prepare("DELETE FROM room WHERE room_id = ?")->execute([$roomId]);
+                $success = 'Room deleted.';
+            }
         } catch (PDOException $e) {
-            $error = 'Cannot delete: room has bookings.';
+            $error = 'Cannot delete room.';
         }
     }
 }
 
 try {
     $rooms = $pdo->query("
-        SELECT r.room_id, r.room_no, r.price, r.availability, r.h_id,
+        SELECT r.room_id, r.room_no, r.price, r.availability, r.h_id, r.photo,
                rt.type, rt.capacity, h.h_name
         FROM room r
         LEFT JOIN roomtype rt ON rt.room_id = r.room_id
@@ -63,8 +100,23 @@ try {
 }
 $hostels = $pdo->query("SELECT h_id, h_name FROM hostel ORDER BY h_name")->fetchAll();
 
-$roomImages = ['room1.jpeg', 'room2.jpeg', 'room3.jpeg', 'room4.jpeg'];
-function getRoomImageAdmin($index, $images) {
+/**
+ * Choose an admin preview image based on capacity:
+ *  - 1 seater  → room1 / room2
+ *  - 2 seater  → room3 / room4
+ *  - 3+ seater → room5 / room6
+ */
+function getRoomImageAdminByCapacity($capacity, $index = 0) {
+    $capacity = (int)$capacity ?: 1;
+
+    if ($capacity <= 1) {
+        $images = ['room1.jpeg', 'room2.jpeg'];
+    } elseif ($capacity === 2) {
+        $images = ['room3.jpeg', 'room4.jpeg'];
+    } else {
+        $images = ['room5.jpeg', 'room6.jpeg'];
+    }
+
     return $images[$index % count($images)];
 }
 ?>
@@ -77,8 +129,14 @@ function getRoomImageAdmin($index, $images) {
         <h2 style="margin-bottom: 1rem;">Room details</h2>
         <div class="card-grid" style="margin-bottom: 2rem;">
             <?php foreach ($rooms as $index => $r):
-                $img = getRoomImageAdmin($index, $roomImages);
-                $imgPath = '../' . $img;
+                $capacity = isset($r['capacity']) ? (int)$r['capacity'] : 1;
+                // Use uploaded photo if available, otherwise capacity-based preview image
+                if (!empty($r['photo'])) {
+                    $imgPath = '../' . ltrim($r['photo'], '/');
+                } else {
+                    $img = getRoomImageAdminByCapacity($capacity, $index);
+                    $imgPath = '../' . $img;
+                }
             ?>
             <div class="room-card">
                 <img src="<?= htmlspecialchars($imgPath) ?>" alt="Room <?= htmlspecialchars($r['room_no']) ?>" onerror="this.src='../assets/images/room-placeholder.svg'">
@@ -110,7 +168,7 @@ function getRoomImageAdmin($index, $images) {
         <?php if (!empty($hostels)): ?>
         <div class="form-card" style="max-width: 500px; margin-bottom: 2rem;">
             <h2>Add Room</h2>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="add">
                 <div class="form-group">
                     <label>Hostel *</label>
@@ -143,6 +201,10 @@ function getRoomImageAdmin($index, $images) {
                     <label>Capacity</label>
                     <input type="number" name="capacity" min="0">
                 </div>
+                <div class="form-group">
+                    <label>Room Photo</label>
+                    <input type="file" name="photo" accept="image/*">
+                </div>
                 <button type="submit" class="btn btn-primary">Add</button>
             </form>
         </div>
@@ -170,7 +232,7 @@ function getRoomImageAdmin($index, $images) {
                         <td><?= htmlspecialchars($r['room_no'] ?? '—') ?></td>
                         <td><?= htmlspecialchars($r['type'] ?? '—') ?></td>
                         <td><?= (int)($r['capacity'] ?? 0) ?></td>
-                        <td>₹<?= number_format($r['price'] ?? 0) ?></td>
+                        <td>Rs. <?= number_format($r['price'] ?? 0) ?></td>
                         <td>
                             <form method="post" style="display:inline;">
                                 <input type="hidden" name="action" value="update_avail">

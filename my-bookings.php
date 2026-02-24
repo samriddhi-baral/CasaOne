@@ -42,17 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['boo
     $stmt->execute([$bid, $userId]);
     $b = $stmt->fetch();
     if ($b) {
+        // User can pay while booking is pending; admin handles check-in and check-out
         if ($action === 'confirm' && $b['status'] === 'pending') {
-            $pdo->prepare("UPDATE booking SET status = 'confirmed' WHERE b_id = ?")->execute([$bid]);
+            $pdo->prepare("UPDATE booking SET status = 'paid' WHERE b_id = ?")->execute([$bid]);
             try {
                 $pdo->prepare("INSERT INTO payment (u_id, a_id, amount, pay_date, pay_type) VALUES (?, NULL, ?, CURDATE(), 'cash payment')")->execute([$userId, $b['amount']]);
             } catch (PDOException $e) {
                 $pdo->prepare("INSERT INTO payment (u_id, a_id, amount, pay_date) VALUES (?, NULL, ?, CURDATE())")->execute([$userId, $b['amount']]);
             }
-        } elseif ($action === 'check_in' && $b['status'] === 'confirmed') {
-            $pdo->prepare("UPDATE booking SET status = 'checked_in' WHERE b_id = ?")->execute([$bid]);
-        } elseif ($action === 'check_out' && $b['status'] === 'checked_in') {
-            $pdo->prepare("UPDATE booking SET check_out = CURDATE(), status = 'checked_out' WHERE b_id = ?")->execute([$bid]);
         }
     }
     header('Location: my-bookings.php');
@@ -149,20 +146,14 @@ require_once __DIR__ . '/includes/header.php';
                             <form method="post" style="display:inline;">
                                 <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
                                 <input type="hidden" name="action" value="confirm">
-                                <button type="submit" class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.9rem;">Pay & Confirm</button>
+                                <button type="submit" class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.9rem;">Pay</button>
                             </form>
+                            <?php elseif (($b['status'] ?? '') === 'paid'): ?>
+                                <span style="color: var(--color-text-muted); font-size:0.9rem;">Waiting for admin confirmation</span>
                             <?php elseif (($b['status'] ?? '') === 'confirmed'): ?>
-                            <form method="post" style="display:inline;">
-                                <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
-                                <input type="hidden" name="action" value="check_in">
-                                <button type="submit" class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.9rem;">Check In</button>
-                            </form>
+                                <span style="color: var(--color-text-muted); font-size:0.9rem;">Confirmed by admin. Please check in at the hostel.</span>
                             <?php elseif (($b['status'] ?? '') === 'checked_in'): ?>
-                            <form method="post" style="display:inline;">
-                                <input type="hidden" name="booking_id" value="<?= (int)$b['b_id'] ?>">
-                                <input type="hidden" name="action" value="check_out">
-                                <button type="submit" class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.9rem;">Check Out</button>
-                            </form>
+                                <span style="color: var(--color-text-muted); font-size:0.9rem;">Checked in. Admin will record your check-out.</span>
                             <?php else: ?>—<?php endif; ?>
                         </td>
                     </tr>

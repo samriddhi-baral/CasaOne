@@ -8,7 +8,7 @@
                 </div>
                 <div class="footer-col">
                     <h4>Contact Us</h4>
-                    <p>📍 Balumari-Lalitpur, Nepal</p>
+                    <p>📍 Balkumari-Lalitpur, Nepal</p>
                     <p>📞 +977 98765 43210</p>
                     <p>✉️ casaone@gmail.com</p>
                 </div>

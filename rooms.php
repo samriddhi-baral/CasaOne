@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDB();
 $stmt = $pdo->query("
-    SELECT r.room_id, r.room_no, r.price, r.availability, r.h_id,
+    SELECT r.room_id, r.room_no, r.price, r.availability, r.h_id, r.photo,
            rt.type, rt.capacity, h.h_name
     FROM room r
     LEFT JOIN roomtype rt ON rt.room_id = r.room_id
@@ -14,8 +14,10 @@ $stmt = $pdo->query("
 ");
 $rooms = $stmt->fetchAll();
 
-// Room images array - cycles through available images (stored in project root)
-$roomImages = ['room1.jpeg', 'room2.jpeg', 'room3.jpeg', 'room4.jpeg'];
+// Room images grouped by capacity (stored in project root)
+$singleSeatImages = ['room1.jpeg', 'room2.jpeg']; // 1-seater
+$doubleSeatImages = ['room3.jpeg', 'room4.jpeg']; // 2-seater
+$tripleSeatImages = ['room5.jpeg', 'room6.jpeg']; // 3+ seater
 
 // Default rooms to display if database is empty
 $defaultRooms = [
@@ -31,8 +33,20 @@ $defaultRooms = [
 if (empty($rooms)) {
     $rooms = $defaultRooms;
 }
-function getRoomImage($index, $images) {
-    // Images are in the project root folder
+
+/**
+ * Choose a room image based on capacity (1, 2, 3+ seater).
+ * Falls back to single-seater images if capacity is missing.
+ */
+function getRoomImageByCapacity($capacity, $index, $singleImages, $doubleImages, $tripleImages) {
+    $capacity = (int)$capacity ?: 1;
+    if ($capacity <= 1) {
+        $images = $singleImages;
+    } elseif ($capacity === 2) {
+        $images = $doubleImages;
+    } else {
+        $images = $tripleImages;
+    }
     return $images[$index % count($images)];
 }
 ?>
@@ -41,7 +55,13 @@ function getRoomImage($index, $images) {
         <h1 class="section-title">Rooms & Fee</h1>
         <div class="card-grid">
             <?php foreach ($rooms as $index => $r):
-                $img = getRoomImage($index, $roomImages);
+                $capacity = isset($r['capacity']) ? (int)$r['capacity'] : 1;
+                // Use per-room photo if set; otherwise fall back to capacity-based default image
+                if (!empty($r['photo'])) {
+                    $img = $r['photo'];
+                } else {
+                    $img = getRoomImageByCapacity($capacity, $index, $singleSeatImages, $doubleSeatImages, $tripleSeatImages);
+                }
                 $available = (strtolower($r['availability'] ?? '') !== 'occupied');
             ?>
             <div class="room-card">
