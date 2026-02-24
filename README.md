@@ -79,7 +79,81 @@ project/
 ## Security
 
 - Passwords: **password_hash(PASSWORD_DEFAULT)** / **password_verify()**.  
-- User login: **sessions**; optional **remember me** → secure cookie + `remember_tokens` (user_id = u_id).  
+- User login: **sessions**; cookie
 - Admin login: session only (no remember cookie).  
 - All DB access via **PDO** prepared statements.
-#CasaOne
+# CasaOne — Student Hostel Management
+
+Simple PHP hostel management system intended to run on a local XAMPP (Apache + MySQL) stack.
+
+## Overview
+
+This repo contains a small PHP application for managing hostel rooms, bookings, complaints, feedback, and an admin panel.
+
+## Prerequisites
+
+- XAMPP (Apache + MySQL) or any PHP 7.4+ + MySQL/MariaDB environment
+- A working browser to access the app at `http://localhost/CasaOne` (when placed in XAMPP `htdocs`)
+
+## Quick Install
+
+1. Copy the project folder into your XAMPP `htdocs` directory (or configure your webroot to this folder).
+2. Start Apache and MySQL via the XAMPP control panel.
+3. Import the database schema: open phpMyAdmin and import `database/project.sql`.
+4. Update database credentials in [config/database.php](config/database.php).
+5. Ensure the `uploads/rooms/` directory is writable by the webserver (for file uploads).
+6. Open the app in your browser: `http://localhost/CasaOne` and the admin panel at `http://localhost/CasaOne/admin`.
+
+## File / Folder Structure
+
+Top-level files
+- [index.php](index.php): Public homepage / landing page
+- [login.php](login.php): User login page
+- [logout.php](logout.php): Logout script
+- [rooms.php](rooms.php): Rooms listing
+- [booking.php](booking.php): Booking submission page
+- [my-bookings.php](my-bookings.php): User's bookings
+- [admission.php](admission.php), [complaint.php](complaint.php), [feedback.php](feedback.php), [faq.php](faq.php), [fees.php](fees.php), [study-hall.php](study-hall.php), [facilities.php](facilities.php)
+- [README.md](README.md): This file
+
+Configuration
+- [config/database.php](config/database.php): Database connection settings
+
+Includes
+- [includes/header.php](includes/header.php) and [includes/footer.php](includes/footer.php): Public site header/footer
+- [auth.php](includes/auth.php): Authentication helper
+
+Admin panel (protected)
+- [admin/index.php](admin/index.php): Admin dashboard
+- [admin/login.php](admin/login.php): Admin login
+- [admin/bookings.php](admin/bookings.php): Manage bookings
+- [admin/complaints.php](admin/complaints.php): Manage complaints
+- [admin/feedback.php](admin/feedback.php): View feedback
+- [admin/hostels.php](admin/hostels.php): Hostels management
+- [admin/payments.php](admin/payments.php): Payments management
+- [admin/rooms.php](admin/rooms.php): Admin rooms CRUD
+- [admin/students.php](admin/students.php): Student records
+- [admin/users.php](admin/users.php): Admin users management
+- [admin/includes/header.php](admin/includes/header.php) and [admin/includes/footer.php](admin/includes/footer.php)
+
+Assets and uploads
+- `assets/css/style.css`: Main stylesheet ([assets/css/style.css](assets/css/style.css))
+- `assets/js/main.js`: Frontend JS ([assets/js/main.js](assets/js/main.js))
+- `assets/images/`: Images used by the site
+- `uploads/rooms/`: Uploaded room images and media
+
+Database
+- `database/project.sql`: Database schema and sample data
+
+## Notes & Maintenance
+
+- After importing the SQL, check the `users` or `admin` table for seeded admin credentials. If none exist, create an admin user directly in the database.
+- Keep `config/database.php` out of version control if you add real credentials.
+- Back up `uploads/` before clearing or migrating data.
+
+## Next steps
+
+- Customize `config/database.php` and import `database/project.sql` to start using the app.
+
+---
+Generated README reflecting the repository layout and basic setup instructions.
