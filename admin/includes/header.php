@@ -9,8 +9,8 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' : '' ?>CasaOne Admin</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' : '' ?>Admin Panel</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
     <style>
         .admin-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
@@ -24,8 +24,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
     <header class="site-header">
         <div class="container header-inner">
             <a href="index.php" class="logo">
-                <img src="../assets/images/casaone-logo.png" alt="CasaOne Logo">
-                Casa<span>One</span>
+                <img src="../assets/images/casaone-logo.png" alt="Logo">
             </a>
             <nav class="main-nav admin-nav">
                 <a href="index.php" class="<?= $currentPage === 'index' ? 'active' : '' ?>">Dashboard</a>

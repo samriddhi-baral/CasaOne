@@ -4,13 +4,13 @@ Full working backend: **login**, **signup**, **admin panel**, **user panel**, **
 
 ## Database
 
-- **database/schema_complete.sql** – Single schema file: all tables (admin, users, userregistration, hostel, room, roomtype, student, complaint, payment, booking, remember_tokens, feedback, faq, password_reset_tokens, etc.).
+- **database/project.sql** – Single schema file: all tables (admin, users, hostel, room, roomtype, complaint, payment, booking, feedback, faq, etc.).
 
 ### Setup
 
 1. **XAMPP**: Start **Apache** and **MySQL**.
 2. **phpMyAdmin**: Create database `project` (or use existing).
-3. Import **database/schema_complete.sql** (creates database and all tables).
+3. Import **database/project.sql** (creates database and all tables).
 4. **config/database.php**: Set `DB_NAME` to `project` (already set). Edit host/user/pass if needed.
 
 ## Features (unchanged from your frontend)
@@ -56,7 +56,7 @@ Full working backend: **login**, **signup**, **admin panel**, **user panel**, **
 project/
 ├── config/database.php       # DB name: project
 ├── database/
-│   └── schema_complete.sql    # Complete schema (single import)
+│   └── project.sql            # Complete schema (single import)
 ├── includes/
 │   ├── auth.php               # Session, cookie, hashing; isAdmin(), isLoggedInAsUser()
 │   ├── header.php

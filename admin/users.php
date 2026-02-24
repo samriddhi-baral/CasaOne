@@ -19,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['u_i
                 try { $pdo->prepare("UPDATE complaint SET u_id = NULL WHERE u_id = ?")->execute([$u_id]); } catch (Throwable $e) { }
                 $pdo->prepare("UPDATE hostel SET u_id = NULL WHERE u_id = ?")->execute([$u_id]);
                 try { $pdo->prepare("UPDATE feedback SET u_id = NULL WHERE u_id = ?")->execute([$u_id]); } catch (Throwable $e) { }
-                try { $pdo->prepare("DELETE FROM password_reset_tokens WHERE u_id = ?")->execute([$u_id]); } catch (Throwable $e) { }
                 $pdo->prepare("DELETE FROM users WHERE u_id = ?")->execute([$u_id]);
                 $success = 'User deleted.';
             } else {

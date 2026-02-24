@@ -200,18 +200,6 @@ INSERT INTO `faq` (`question`, `answer`, `sort_order`) VALUES
 ('What types of rooms are available?', 'See the Rooms page for room types, capacity, and availability.', 2),
 ('What is the fee structure?', 'See the Fee page for monthly and annual rates by room type.', 3);
 
--- Password reset tokens table (for forgot password functionality)
-CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `u_id` int NOT NULL,
-  `token_hash` varchar(64) NOT NULL,
-  `expires_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `token_hash` (`token_hash`),
-  KEY `expires_at` (`expires_at`),
-  CONSTRAINT `password_reset_tokens_ibfk_1` FOREIGN KEY (`u_id`) REFERENCES `users` (`u_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
